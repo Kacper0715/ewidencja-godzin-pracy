@@ -22,12 +22,11 @@ document.addEventListener("DOMContentLoaded", function() {
     })();
 
     // ---- WALUTA ----
-    const MIN_RATE = 3;
-    const MAX_RATE = 7;
     let exchangeRate = 4.30;
     const currencySelect = document.getElementById('currency-select');
     const currencySymbol = document.getElementById('currency-symbol');
     const summaryCurrency = document.getElementById('summary-currency');
+    const eurRateSpan = document.getElementById('eur-rate');
 
     const showAlert = (msg, success = false) => {
         const banner = document.getElementById('alert-banner');
@@ -80,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     document.getElementById('eur-rate-save').onclick = function() {
         const val = parseFloat(document.getElementById('eur-rate-input').value.replace(',', '.'));
-        if (isNaN(val) || val < MIN_RATE || val > MAX_RATE) {
+        if (isNaN(val) || val < 3 || val > 7) {
             document.getElementById('eur-rate-msg').textContent = "Niepoprawny kurs!";
             document.getElementById('eur-rate-msg').style.display = 'inline';
             return;
@@ -301,8 +300,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function deleteEntry(index) {
-        index = parseInt(index);
-        if (isNaN(index) || index < 0 || index >= entries.length) return;
         const row = document.querySelector(`tr[data-edit-index="${index}"]`);
         if (row) {
             row.classList.add('entry-removing');
@@ -373,7 +370,8 @@ document.addEventListener("DOMContentLoaded", function() {
             </thead>
             <tbody>
         `;
-        filteredEntries.forEach((entry, i) => {
+        filteredEntries.forEach((entry) => {
+            const trueIndex = entries.indexOf(entry);
             let dailyPay = entry.hours * entry.rate;
             let rateDisplay = entry.rate;
             let symbol = entry.currency === "EUR" ? "€" : "zł";
@@ -389,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     symbol = "zł";
                 }
             }
-            html += `<tr data-edit-index="${i}" style="cursor:pointer;">
+            html += `<tr data-edit-index="${trueIndex}" style="cursor:pointer;">
                 <td>${entry.date}</td>
                 <td>${entry.project || '-'}</td>
                 <td>${entry.start}</td>
@@ -398,7 +396,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <td>${entry.hours}</td>
                 <td>${dailyPay.toFixed(2)} ${symbol}</td>
                 <td>
-                    <button class="delete-btn" title="Usuń wpis" data-index="${i}" onclick="event.stopPropagation();"><i data-feather="trash-2"></i></button>
+                    <button class="delete-btn" title="Usuń wpis" data-index="${trueIndex}" onclick="event.stopPropagation();"><i data-feather="trash-2"></i></button>
                 </td>
             </tr>`;
         });
@@ -431,7 +429,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-currency').textContent = entry.currency === "EUR" ? "€" : "zł";
         document.getElementById('edit-modal').classList.add('active');
         document.body.classList.add('modal-open');
-        requestAnimationFrame(() => document.getElementById('edit-date').focus());
+        setTimeout(() => document.getElementById('edit-date').focus(), 10);
     }
     function closeEditModal() {
         document.getElementById('edit-modal').classList.remove('active');
@@ -462,10 +460,7 @@ document.addEventListener("DOMContentLoaded", function() {
             else inputProject = inputProject.charAt(0).toUpperCase() + inputProject.slice(1);
             const start = document.getElementById('edit-start').value;
             const end = document.getElementById('edit-end').value;
-            if (start >= end) {
-                showAlert("Godzina zakończenia musi być po godzinie rozpoczęcia!", false);
-                return;
-            }
+            // usunięto weryfikację start >= end
             let rate = parseFloat(document.getElementById('edit-rate').value);
             if (isNaN(rate) || rate < 0 || rate > 500) {
                 showAlert("Stawka musi być liczbą z zakresu 0-500.", false);
@@ -511,10 +506,7 @@ document.addEventListener("DOMContentLoaded", function() {
             showAlert("Uzupełnij wszystkie pola poprawnie!", false);
             return;
         }
-        if (start >= end) {
-            showAlert("Godzina zakończenia musi być po godzinie rozpoczęcia!", false);
-            return;
-        }
+        // usunięto weryfikację start >= end
         if (rate < 0 || rate > 500) {
             showAlert("Stawka musi być z zakresu 0-500.", false);
             return;
