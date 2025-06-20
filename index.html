@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ewidencja godzin pracy</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ewidencja godzin pracy</h1>
+            <button id="theme-toggle" title="Zmień motyw" aria-label="Przełącz motyw jasny/ciemny">
+                <i id="theme-icon" data-feather="moon"></i>
+            </button>
+        </header>
+
+        <!-- Sekcja wyboru waluty -->
+        <section class="currency-section card">
+            <label for="currency-select">Waluta: </label>
+            <select id="currency-select" aria-label="Wybierz walutę">
+                <option value="PLN">PLN (zł)</option>
+                <option value="EUR">EUR (€)</option>
+            </select>
+            <span class="exchange-info" aria-live="polite" aria-atomic="true">
+                (Kurs: 1 EUR = <span id="eur-rate">4.30</span> zł
+                <button id="eur-rate-edit" title="Zmień kurs" type="button" aria-label="Edytuj kurs">✏️</button>
+                <button id="eur-rate-nbp" title="Aktualizuj z NBP" type="button" aria-label="Pobierz kurs z NBP">↺</button>
+                <span id="eur-rate-edit-box" style="display:none;margin-left:6px;">
+                    <input type="number" id="eur-rate-input" min="3" max="7" step="0.0001" style="width:70px;font-size:1em;" aria-label="Wpisz kurs euro" />
+                    <button id="eur-rate-save" type="button" style="background:#5078f2;color:#fff;border:none;border-radius:4px;padding:2px 10px;cursor:pointer;">OK</button>
+                </span>
+                <span id="eur-rate-msg" style="color:#c93a3a;font-size:0.98em;margin-left:7px;display:none;" role="alert"></span>
+                )
+            </span>
+        </section>
+
+        <!-- Kalkulator walut zawsze widoczny -->
+        <section class="currency-section card" style="margin-top:-24px;" aria-label="Kalkulator walut PLN/EUR">
+            <div id="eur-calc">
+                <label style="display:flex;align-items:center;gap:7px;">
+                    <input id="pln-to-eur" type="number" min="0" step="any" placeholder="PLN" aria-label="PLN do EUR" /> PLN
+                    <span style="margin:0 6px;">=</span>
+                    <input id="eur-from-pln" type="number" min="0" step="any" placeholder="EUR" aria-label="EUR z PLN" /> EUR
+                </label>
+                <label style="display:flex;align-items:center;gap:7px;">
+                    <input id="eur-to-pln" type="number" min="0" step="any" placeholder="EUR" aria-label="EUR do PLN" /> EUR
+                    <span style="margin:0 6px;">=</span>
+                    <input id="pln-from-eur" type="number" min="0" step="any" placeholder="PLN" aria-label="PLN z EUR" /> PLN
+                </label>
+            </div>
+        </section>
+
+        <main>
+            <section class="form-section card">
+                <form id="work-form" autocomplete="off" aria-label="Formularz dodawania wpisu pracy">
+                    <div class="form-group">
+                        <label for="date">
+                            Data:
+                            <span class="tooltip" data-tooltip="Podaj dzień pracy"><i data-feather="info"></i></span>
+                        </label>
+                        <input type="date" id="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="project">
+                            Projekt/stanowisko:
+                            <span class="tooltip" data-tooltip="Wpisz lub wybierz projekt"><i data-feather="info"></i></span>
+                        </label>
+                        <input
+                            type="text"
+                            id="project"
+                            maxlength="40"
+                            placeholder="np. Projekt X, Magazynier"
+                            list="project-datalist"
+                            autocomplete="off"
+                            required
+                        />
+                        <datalist id="project-datalist"></datalist>
+                    </div>
+                    <div class="two-cols form-group">
+                        <div>
+                            <label for="start">
+                                Start:
+                                <span class="tooltip" data-tooltip="Godzina rozpoczęcia (format HH:MM)"><i data-feather="info"></i></span>
+                            </label>
+                            <input type="time" id="start" required />
+                        </div>
+                        <div>
+                            <label for="end">
+                                Koniec:
+                                <span class="tooltip" data-tooltip="Godzina zakończenia (format HH:MM)"><i data-feather="info"></i></span>
+                            </label>
+                            <input type="time" id="end" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="rate">
+                            Stawka [<span id="currency-symbol">zł</span>/h]:
+                            <span class="tooltip" data-tooltip="Kwota brutto za godzinę"><i data-feather="info"></i></span>
+                        </label>
+                        <input type="number" id="rate" min="0" max="500" step="0.01" required placeholder="np. 22.50" onwheel="this.blur()" />
+                    </div>
+                    <button type="submit" id="add-btn">
+                        <i data-feather="plus-circle"></i>
+                        <span id="add-btn-text">Dodaj wpis</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- CUSTOM SELECT PROJECT -->
+            <section class="project-filter-section">
+                <div id="custom-select-wrapper"></div>
+            </section>
+
+            <section class="list-section">
+                <div id="entries"></div>
+            </section>
+
+            <section class="summary-section card">
+                <h2>
+                    <i data-feather="pie-chart"></i> Podsumowanie
+                </h2>
+                <div id="summary">
+                    Suma godzin: <span id="total-hours">0</span> | Suma zarobków:
+                    <span id="total-pay">0</span> <span id="summary-currency">zł</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="alert-banner" role="alert" aria-live="assertive"></div>
+
+    <!-- MODAL EDYCJI -->
+    <div id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" tabindex="-1">
+        <div class="edit-modal-overlay" id="edit-modal-overlay">
+            <div class="edit-modal-content" role="document">
+                <button id="close-edit-modal" title="Zamknij" aria-label="Zamknij edycję">×</button>
+                <h2 id="edit-modal-title">Edycja wpisu</h2>
+                <form id="edit-form" autocomplete="off" aria-label="Formularz edycji wpisu pracy">
+                    <div>
+                        <label>
+                            Data:
+                            <input type="date" id="edit-date" required />
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Projekt/stanowisko:
+                            <input
+                                type="text"
+                                id="edit-project"
+                                maxlength="40"
+                                list="project-datalist"
+                                autocomplete="off"
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Start:
+                            <input type="time" id="edit-start" required />
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Koniec:
+                            <input type="time" id="edit-end" required />
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Stawka:
+                            <input type="number" id="edit-rate" min="0" max="500" step="0.01" required />
+                        </label>
+                        <span id="edit-currency"></span>
+                    </div>
+                    <button type="submit">Zapisz zmiany</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+            });
+        }
+    </script>
+</body>
+</html>
