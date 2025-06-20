@@ -194,19 +194,28 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 #eur-calc {
     display: flex;
-    flex-direction: column;
-    gap: 7px;
-    max-width: 360px;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-start;
+    max-width: 100%;
     margin-top: 7px;
     font-size: 1em;
     overflow-x: auto;
 }
+#eur-calc label {
+    flex: 1 1 180px;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 #eur-calc input[type="number"] {
-    width: 100px;
-    padding: 5px 8px;
+    width: 100%;
+    max-width: 140px;
+    padding: 8px 10px;
     border-radius: 7px;
     border: 1.5px solid #cbd5e1;
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 .project-filter-section { margin: 0 0 18px 0; }
@@ -337,27 +346,6 @@ input[type="number"] { -moz-appearance: textfield; }
     color: var(--main);
     font-weight: 700;
     margin-right: 5px;
-}
-
-@media (max-width: 700px) {
-    .container { padding: 12px 0; max-width: 99vw;}
-    header h1 { font-size: 1.15rem;}
-    .card, .summary-section { padding: 13px 5px;}
-    .form-section, .currency-section { padding-bottom: 9px; }
-    .entries-table { font-size: 0.96em; }
-}
-@media (max-width: 540px) {
-    .card, .summary-section { margin-bottom: 18px; }
-    .entries-table, .entries-table thead, .entries-table tbody, .entries-table tr, .entries-table th, .entries-table td {
-        display: none !important;
-    }
-    #entries .entry-card { display: block; }
-    .entry-card { font-size: 1.03em; }
-    .entry-card .entry-label { font-size: 1em;}
-    .delete-btn, .edit-btn { font-size: 1.1em;}
-    .form-group, .two-cols { flex-direction: column !important; gap: 9px;}
-    input, select { font-size: 1.06em;}
-    #add-btn { font-size: 1.05em; }
 }
 
 /* Tooltip nowoczesny, lekki, fadeIn, wyłączone na mobile */
@@ -600,10 +588,110 @@ body.dark-mode .edit-modal-content button[type="submit"] {
     color: #23273c;
 }
 
-@media (max-width: 540px) {
+/* --- Responsywność --- */
+@media (max-width: 700px) {
+    .container {
+        padding: 12px 16px;
+        max-width: 95vw;
+        margin: 20px auto;
+    }
+    header h1 {
+        font-size: 1.6rem;
+        text-align: center;
+    }
+    .currency-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.95rem;
+    }
+    #eur-calc {
+        max-width: 100%;
+        overflow-x: auto;
+    }
     #eur-calc label {
         flex-direction: column;
         align-items: flex-start;
-        gap: 3px;
+        gap: 5px;
     }
+    #eur-calc input[type="number"] {
+        width: 100%;
+        max-width: 150px;
+        font-size: 1rem;
+    }
+    .form-section, .summary-section {
+        padding: 16px 12px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .two-cols {
+        flex-direction: column !important;
+        gap: 10px;
+    }
+    input, select {
+        font-size: 1.1rem;
+    }
+    #add-btn {
+        font-size: 1.1rem;
+        padding: 12px 0;
+    }
+    .entries-table {
+        font-size: 0.9rem;
+    }
+}
+
+/* --- Bardziej drobne dostosowanie dla bardzo małych ekranów (np. smartfony) --- */
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.3rem;
+    }
+    #eur-calc label {
+        font-size: 0.9rem;
+    }
+    input, select {
+        font-size: 1rem;
+    }
+    #add-btn {
+        font-size: 1rem;
+    }
+    .entries-table th, .entries-table td {
+        padding: 6px 4px;
+    }
+    /* Tabela do kart (entry-card) na bardzo małych ekranach */
+    .entries-table,
+    .entries-table thead,
+    .entries-table tbody,
+    .entries-table tr,
+    .entries-table th,
+    .entries-table td {
+        display: none !important;
+    }
+    #entries .entry-card {
+        display: block;
+    }
+    .entry-card {
+        font-size: 1em;
+        padding: 12px 10px;
+    }
+    .entry-card .entry-label {
+        font-size: 1em;
+    }
+    .delete-btn, .edit-btn {
+        font-size: 1.1em;
+    }
+}
+
+/* --- Ustawienia scrollbarów dla przewijanych sekcji (jeśli wystąpią) */
+#eur-calc::-webkit-scrollbar {
+    height: 8px;
+}
+#eur-calc::-webkit-scrollbar-thumb {
+    background-color: var(--main);
+    border-radius: 6px;
+}
+
+/* --- Poprawka marginesów przy sekcjach aby nie nakładały się --- */
+.currency-section + .currency-section {
+    margin-top: 10px;
 }
