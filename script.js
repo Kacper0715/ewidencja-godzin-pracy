@@ -321,6 +321,63 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    // Generowanie kart wpisów dla telefonów
+    function renderEntriesCards(filteredEntries) {
+        const entriesDiv = document.getElementById('entries');
+        let cardsHtml = '';
+        filteredEntries.forEach((entry) => {
+            let symbol = entry.currency === "EUR" ? "€" : "zł";
+            let dailyPay = entry.hours * entry.rate;
+            let rateDisplay = entry.rate;
+            const cur = currencySelect.value;
+            if (entry.currency !== cur) {
+                if (cur === "EUR" && entry.currency === "PLN") {
+                    dailyPay = dailyPay / exchangeRate;
+                    rateDisplay = (entry.rate / exchangeRate).toFixed(2);
+                    symbol = "€";
+                }
+                if (cur === "PLN" && entry.currency === "EUR") {
+                    dailyPay = dailyPay * exchangeRate;
+                    rateDisplay = (entry.rate * exchangeRate).toFixed(2);
+                    symbol = "zł";
+                }
+            }
+
+            cardsHtml += `
+                <div class="entry-card" tabindex="0" data-edit-index="${entries.indexOf(entry)}">
+                    <div class="entry-data">
+                        <div><span class="entry-label">Data:</span> ${entry.date}</div>
+                        <div><span class="entry-label">Projekt:</span> ${entry.project || '-'}</div>
+                        <div><span class="entry-label">Start:</span> ${entry.start}</div>
+                        <div><span class="entry-label">Koniec:</span> ${entry.end}</div>
+                        <div><span class="entry-label">Stawka:</span> ${rateDisplay} ${symbol}/h</div>
+                        <div><span class="entry-label">Godziny:</span> ${entry.hours}</div>
+                        <div><span class="entry-label">Zarobek:</span> ${dailyPay.toFixed(2)} ${symbol}</div>
+                    </div>
+                    <div class="entry-actions">
+                        <button class="delete-btn" title="Usuń wpis" data-index="${entries.indexOf(entry)}" aria-label="Usuń wpis"><i data-feather="trash-2"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        entriesDiv.insertAdjacentHTML('beforeend', cardsHtml);
+
+        // Dodaj eventy do kart i przycisków usuwania
+        document.querySelectorAll('.entry-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-edit-index'));
+                openEditModal(index);
+            });
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const index = this.getAttribute('data-index');
+                deleteEntry(index);
+            });
+        });
+    }
+
     function renderSummary() {
         let totalHours = 0;
         let totalPay = 0;
@@ -351,11 +408,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const filteredEntries = selectedProject === "Wszystkie"
             ? entries
             : entries.filter(e => (e.project || "").toLowerCase() === selectedProject.toLowerCase());
+        entriesDiv.innerHTML = ''; // Wyczyść zawartość
+
         if (filteredEntries.length === 0) {
             entriesDiv.innerHTML = '<div class="empty-list">Brak wpisów. Dodaj swój pierwszy dzień pracy!</div>';
             return;
         }
-        let html = `<table class="entries-table">
+        // Tabela (dla desktop)
+        let html = `<table class="entries-table" aria-label="Lista wpisów pracy">
             <thead>
                 <tr>
                     <th>Data</th>
@@ -402,6 +462,8 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         html += '</tbody></table>';
         entriesDiv.innerHTML = html;
+
+        // Dodaj eventy dla tabeli
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = this.getAttribute('data-index');
@@ -414,6 +476,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 openEditModal(index);
             });
         });
+
+        // Dodaj karty wpisów (do wyświetlenia na telefonie)
+        renderEntriesCards(filteredEntries);
+
         feather.replace();
     }
 
@@ -460,7 +526,7 @@ document.addEventListener("DOMContentLoaded", function() {
             else inputProject = inputProject.charAt(0).toUpperCase() + inputProject.slice(1);
             const start = document.getElementById('edit-start').value;
             const end = document.getElementById('edit-end').value;
-            // usunięto weryfikację start >= end
+            // Usunięto walidację start >= end
             let rate = parseFloat(document.getElementById('edit-rate').value);
             if (isNaN(rate) || rate < 0 || rate > 500) {
                 showAlert("Stawka musi być liczbą z zakresu 0-500.", false);
@@ -506,7 +572,7 @@ document.addEventListener("DOMContentLoaded", function() {
             showAlert("Uzupełnij wszystkie pola poprawnie!", false);
             return;
         }
-        // usunięto weryfikację start >= end
+        // Usunięto walidację start >= end
         if (rate < 0 || rate > 500) {
             showAlert("Stawka musi być z zakresu 0-500.", false);
             return;
